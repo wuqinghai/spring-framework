@@ -70,7 +70,18 @@ public abstract class NamespaceHandlerSupport implements NamespaceHandler {
 	@Override
 	@Nullable
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		// 1.1 上一层的方法已经将元素标签所对应的真正的解析器，放入了parsers这个map中
+		// 1.2 所以这个方法findParserForElement(element, parserContext)，用来找到真正的解析器
+		// 1.3 因为org.springframework.aop.config.AopNamespaceHandler.init()方法里，放的是"aspectj-autoproxy", new AspectJAutoProxyBeanDefinitionParser()
+		//     所以parser就是AspectJAutoProxyBeanDefinitionParser
 		BeanDefinitionParser parser = findParserForElement(element, parserContext);
+		// 2.1 真正的解析器及解析类的对象实例，调用parse方法。
+		// 2.2 相对于org.springframework.beans.factory.xml.XmlBeanDefinitionReader.registerBeanDefinitions这个这层而言，因为在这个方法创建了一个XmlReaderContext对象，我们就把这个方法当做调用链的第一层吧
+		//     然后，这个对象就传到了调用链第二层org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader类，在.registerBeanDefinitions这个方法里面赋给了DefaultBeanDefinitionDocumentReader的属性里
+		//     之后，这个对象就传到了调用链第三层BeanDefinitionParserDelegate的属性里，然后使用这个层层传递的readerContext找到了标签元素所对应的命名空间的AopNamespaceHandler，
+		//     同时在这一层将这个readerContext和当前的BeanDefinitionParserDelegate对象实例，一起封装成了ParserContext对象，传到了本层，也就是这个本方法的入参parserContext。
+		//     Spring的封装思想真是厉害！！！一个工具对象从产生到这里已经传到了第四层，还能接着复用！！！
+		// 2.3 AspectJAutoProxyBeanDefinitionParser的parse方法，真正开始解析这个aspectj-autoproxy标签了！
 		return (parser != null ? parser.parse(element, parserContext) : null);
 	}
 

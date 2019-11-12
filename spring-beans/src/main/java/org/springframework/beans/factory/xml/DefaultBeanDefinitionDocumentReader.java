@@ -92,6 +92,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 */
 	@Override
 	public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
+		// 接收上面传过来的XmlReaderContext，理解为XmlReaderContext的各个属性是解析doc时，需要使用的辅助类
+		// 目前看到是XmlReaderContext的namespaceHandlerResolver属性，值是DefaultNamespaceHandlerResolver，用于根据命名空间找到应的NamespaceHandler。
 		this.readerContext = readerContext;
 		logger.debug("Loading bean definitions");
 		Element root = doc.getDocumentElement();
@@ -126,7 +128,12 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// the new (child) delegate with a reference to the parent for fallback purposes,
 		// then ultimately reset this.delegate back to its original (parent) reference.
 		// this behavior emulates a stack of delegates without actually necessitating one.
+
+		// BeanDefinitionParserDelegate是将Element转换成BeanDefinition的工具类
+		// 此类将会根据Element里面封装的各种bean的属性，生成BeanDefinition。
 		BeanDefinitionParserDelegate parent = this.delegate;
+		// 因为当前类里的readContext属性是读取环境，也就是需要用到各种工具类，所以要传给真正的BeanDefinition生成类
+		// readContext的namespaceHandlerResolver属性，值是DefaultNamespaceHandlerResolver也就被传给了delegate
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
 		if (this.delegate.isDefaultNamespace(root)) {

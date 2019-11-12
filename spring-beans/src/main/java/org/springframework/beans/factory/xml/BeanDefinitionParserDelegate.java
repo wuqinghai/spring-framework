@@ -1379,15 +1379,25 @@ public class BeanDefinitionParserDelegate {
 	 */
 	@Nullable
 	public BeanDefinition parseCustomElement(Element ele, @Nullable BeanDefinition containingBd) {
+		// 1、namespaceUri的值是http://www.springframework.org/schema/aop，即为ele的命名空间
+		// 说明此ele是在哪个命名空间下定义的
 		String namespaceUri = getNamespaceURI(ele);
 		if (namespaceUri == null) {
 			return null;
 		}
+		// 2、知识点：spring使用命名空间与相应的自定义标签解析类NamespaceHandler形成键值对，并放在/META-INF/spring.handlers下面
+		// 3、在初始化这个类的实例的时候，前面的org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader.doRegisterBeanDefinitions将这个读取环境传了过来，
+		//    所以，this.readerContext.getNamespaceHandlerResolver()就是DefaultNamespaceHandlerResolver
+		//    DefaultNamespaceHandlerResolver的resolve(namespaceUri)方法，将根据/META-INF/spring.handlers配置的http\://www.springframework.org/schema/aop=org.springframework.aop.config.AopNamespaceHandler
+		//    实例化AopNamespaceHandler对象，并调用AopNamespaceHandler唯一的init()方法，这个方法的作用是将每一个标签所对应的解析类，存入到父类NamespaceHandlerSupport中的Map<String, BeanDefinitionParser> parsers属性中！
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
 			return null;
 		}
+		// 4.1 AopNamespaceHandler继承自NamespaceHandlerSupport，
+		// 4.2 由于在上面已经调用init()方法，这个方法的作用是将每一个标签所对应的解析类，存入到父类NamespaceHandlerSupport中的Map<String, BeanDefinitionParser> parsers属性中
+		// 4.3 下面是父类NamespaceHandlerSupport的parse方法）（这个方法也就很好理解了，从parsers这个map中找到标签所对应的的解析类，然后调用解析类的解析方法即可）
 		return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
 	}
 

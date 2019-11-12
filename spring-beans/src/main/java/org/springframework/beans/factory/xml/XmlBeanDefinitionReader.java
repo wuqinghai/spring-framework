@@ -505,6 +505,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 		int countBefore = getRegistry().getBeanDefinitionCount();
+		// 第二个参数为解析doc准备的环境new XmlReaderContext
+		// 可以理解为XmlReaderContext的各个属性是解析doc时，需要使用的辅助类
+		// 目前看到是XmlReaderContext的namespaceHandlerResolver属性，值是DefaultNamespaceHandlerResolver，用于根据命名空间找到应的NamespaceHandler
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
