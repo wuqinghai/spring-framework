@@ -72,11 +72,13 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	@Nullable
 	protected Object[] getAdvicesAndAdvisorsForBean(
 			Class<?> beanClass, String beanName, @Nullable TargetSource targetSource) {
-
+		// 从所有的增强中寻找使用bean的增强
 		List<Advisor> advisors = findEligibleAdvisors(beanClass, beanName);
+		// 没有找到返回null
 		if (advisors.isEmpty()) {
 			return DO_NOT_PROXY;
 		}
+		// 将找到的增强集合转换为数组
 		return advisors.toArray();
 	}
 
@@ -91,7 +93,11 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @see #extendAdvisors
 	 */
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
+		// 1、获取所有的增强
+		// 注意点：当使用xml的形式打开spring aop的时候，注入的是org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator，
+		// 并且这个类覆盖了findCandidateAdvisors()方法，所以这里的调用的是AnnotationAwareAspectJAutoProxyCreator的findCandidateAdvisors()，并不是本类中的findCandidateAdvisors()
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();
+		// 2、查找适合bean的增强，并返回
 		List<Advisor> eligibleAdvisors = findAdvisorsThatCanApply(candidateAdvisors, beanClass, beanName);
 		extendAdvisors(eligibleAdvisors);
 		if (!eligibleAdvisors.isEmpty()) {
