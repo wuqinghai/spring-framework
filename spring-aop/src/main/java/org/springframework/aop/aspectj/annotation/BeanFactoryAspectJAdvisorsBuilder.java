@@ -44,6 +44,7 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 
 	private final AspectJAdvisorFactory advisorFactory;
 
+	/**增强bean的beanName集合*/
 	@Nullable
 	private volatile List<String> aspectBeanNames;
 
@@ -81,42 +82,58 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 	 * @see #isEligibleBean
 	 */
 	public List<Advisor> buildAspectJAdvisors() {
+		// 记录当前的增强bean的beanName集合，刚开始为null
 		List<String> aspectNames = this.aspectBeanNames;
 
+		// 第一次加载增强
 		if (aspectNames == null) {
 			synchronized (this) {
 				aspectNames = this.aspectBeanNames;
+				// 两个空判断，双重检查机制
 				if (aspectNames == null) {
 					List<Advisor> advisors = new ArrayList<>();
 					aspectNames = new ArrayList<>();
+
+					// 获取所有的beanName
 					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
+
+					// 循环所有的beanName找出对应的增强方法
 					for (String beanName : beanNames) {
+						// 1. 不合法的bean则略过，由子类定义规则，默认返回true
 						if (!isEligibleBean(beanName)) {
 							continue;
 						}
 						// We must be careful not to instantiate beans eagerly as in this case they
 						// would be cached by the Spring container but would not have been weaved.
+						// 2. 获取对应的bean的类型
 						Class<?> beanType = this.beanFactory.getType(beanName);
 						if (beanType == null) {
 							continue;
 						}
+						// 3. 如果存在Aspect注解
 						if (this.advisorFactory.isAspect(beanType)) {
 							aspectNames.add(beanName);
+							// 封装一个AspectMetadata，我们就叫它Aspect元数据对象，用来进行后续的操作，这里面就包括了我们的beanType、beanName，和其他后续需要使用的属性
 							AspectMetadata amd = new AspectMetadata(beanType, beanName);
+							//  如果aspect 注解的模式是singleton，不是很清楚
 							if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
 								MetadataAwareAspectInstanceFactory factory =
 										new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+								// 解析标记AspectJ注解中的增强方法，最为重要和复杂的方法增强器的获取
 								List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
+								// 根据增强bean是单例还是多例来存放到不同的缓存中
 								if (this.beanFactory.isSingleton(beanName)) {
 									this.advisorsCache.put(beanName, classAdvisors);
 								}
 								else {
 									this.aspectFactoryCache.put(beanName, factory);
 								}
+								// 缓存增强
 								advisors.addAll(classAdvisors);
 							}
 							else {
+								// aspect 注解的模式不是singleton
 								// Per target or per this.
 								if (this.beanFactory.isSingleton(beanName)) {
 									throw new IllegalArgumentException("Bean with name '" + beanName +
@@ -135,6 +152,7 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 			}
 		}
 
+		// 增强已经被加载过，直接从缓存里面取
 		if (aspectNames.isEmpty()) {
 			return Collections.emptyList();
 		}
