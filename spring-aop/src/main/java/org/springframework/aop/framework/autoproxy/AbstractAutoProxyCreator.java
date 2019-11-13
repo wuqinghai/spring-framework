@@ -297,8 +297,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	@Override
 	public Object postProcessAfterInitialization(@Nullable Object bean, String beanName) throws BeansException {
 		if (bean != null) {
+			// 根据给定的bean的class和name构建出一个key，优先使用beanName，其次使用bean的class实例
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
+				// 此bean从未代理过，或beanName产生的key已经被使用了，但代理的并不是这个bean，则也需要代理
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}

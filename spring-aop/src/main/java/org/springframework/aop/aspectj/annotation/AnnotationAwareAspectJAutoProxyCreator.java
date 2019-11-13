@@ -45,6 +45,10 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 2.0
  * @see org.springframework.aop.aspectj.annotation.AspectJAdvisorFactory
+ *
+ * AnnotationAwareAspectJAutoProxyCreator 实现了BeanPostProcessor接口
+ * 而实现BeanPostProcessor后，当Spring 加载每一个Bean 时会在实例化前调用其postProcessAfterInitialization方法，
+ * 而我们对于AOP 逻辑的分析也由此开始。
  */
 @SuppressWarnings("serial")
 public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorAutoProxyCreator {
