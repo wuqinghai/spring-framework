@@ -118,10 +118,16 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 							AspectMetadata amd = new AspectMetadata(beanType, beanName);
 							//  如果aspect 注解的模式是singleton，不是很清楚
 							if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
+								// beanFactory和AspectMetadata的集合体
 								MetadataAwareAspectInstanceFactory factory =
 										new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+
+
 								// 解析标记AspectJ注解中的增强方法，最为重要和复杂的方法增强器的获取
+								// 这个方法的入参是封装了beanFactory和增强bean的Class对象的入参
 								List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
+
+
 								// 根据增强bean是单例还是多例来存放到不同的缓存中
 								if (this.beanFactory.isSingleton(beanName)) {
 									this.advisorsCache.put(beanName, classAdvisors);
