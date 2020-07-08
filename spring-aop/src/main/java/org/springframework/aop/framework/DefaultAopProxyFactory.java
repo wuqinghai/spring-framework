@@ -48,7 +48,15 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		// JDK动态代理只能对实现了接口的类生成代理，而不能针对类
+		// Cglib是针对类实现代理，主要是对目标类生成一个子类，覆盖其中的方法，因为是继承，所以该类或方法最好不要声明成final
+		// 1、通过CGLIB创建的代理是否使用激进的优化策略。目前这个属性仅用于CGLIB代理，对于JDK动态代理（默认代理）无效。
+		// 2、proxyTargetClass这个属性为true时，目标类本身被代理而不是目标类的接口。
+		// 3、hasNoUserSuppliedProxyInterfaces是否存在代理接口，即是否没有实现接口
 		if (config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config)) {
+			// Cglib动态代理
+			// 如果目标对象实现了接口，可以强制使用Cglib实现AOP，＜aop:aspectj -autoproxy proxy-target-class＝‘true’/>
+			// 如果目标对象没有实现接口，必须采用Cglib库，Spring会自动在JDK动态代理和Cglib之间转换
 			Class<?> targetClass = config.getTargetClass();
 			if (targetClass == null) {
 				throw new AopConfigException("TargetSource cannot determine target class: " +
@@ -60,6 +68,8 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 			return new ObjenesisCglibAopProxy(config);
 		}
 		else {
+			// Jdk动态代理
+			// 如果目标对象实现了接口，默认情况下会采用JDK的动态代理实现AOP
 			return new JdkDynamicAopProxy(config);
 		}
 	}
